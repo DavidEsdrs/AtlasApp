@@ -2,6 +2,7 @@ package br.com.atlas.atlasapp.model
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.atlas.atlasapp.data.repository.CheckInRepository
 import br.com.atlas.atlasapp.data.repository.RouteRepository
 import br.com.atlas.atlasapp.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,6 +14,7 @@ class MainViewModel : ViewModel() {
 
     private val routeRepository = RouteRepository()
     private val userRepository = UserRepository()
+    private val checkInRepository = CheckInRepository()
     private var hasAttemptedSeed = false
 
     // =========================
@@ -35,6 +37,12 @@ class MainViewModel : ViewModel() {
     private val _routesError = MutableStateFlow<String?>(null)
     val routesError: StateFlow<String?> = _routesError.asStateFlow()
 
+    private val _createRouteLoading = MutableStateFlow(false)
+    val createRouteLoading: StateFlow<Boolean> = _createRouteLoading.asStateFlow()
+
+    private val _createRouteError = MutableStateFlow<String?>(null)
+    val createRouteError: StateFlow<String?> = _createRouteError.asStateFlow()
+
     private val _selectedRoute = MutableStateFlow<Route?>(null)
     val selectedRoute: StateFlow<Route?> = _selectedRoute.asStateFlow()
 
@@ -46,6 +54,9 @@ class MainViewModel : ViewModel() {
 
     private val _detailsError = MutableStateFlow<String?>(null)
     val detailsError: StateFlow<String?> = _detailsError.asStateFlow()
+
+    private val _routeCompletionCount = MutableStateFlow(0)
+    val routeCompletionCount: StateFlow<Int> = _routeCompletionCount.asStateFlow()
 
     private val _exploreRoutes = MutableStateFlow<List<Route>>(emptyList())
     val exploreRoutes: StateFlow<List<Route>> = _exploreRoutes.asStateFlow()
@@ -84,6 +95,15 @@ class MainViewModel : ViewModel() {
 
     private val _checkIns = MutableStateFlow<List<CheckIn>>(emptyList())
     val checkIns: StateFlow<List<CheckIn>> = _checkIns.asStateFlow()
+
+    private val _currentRoutePointIndex = MutableStateFlow(0)
+    val currentRoutePointIndex: StateFlow<Int> = _currentRoutePointIndex.asStateFlow()
+
+    private val _checkInLoading = MutableStateFlow(false)
+    val checkInLoading: StateFlow<Boolean> = _checkInLoading.asStateFlow()
+
+    private val _checkInError = MutableStateFlow<String?>(null)
+    val checkInError: StateFlow<String?> = _checkInError.asStateFlow()
 
     // =========================
     // BADGES
@@ -139,6 +159,7 @@ class MainViewModel : ViewModel() {
             _detailsError.value = "Rota invalida"
             _selectedRoute.value = null
             _routeCreator.value = null
+            _routeCompletionCount.value = 0
             return
         }
 
@@ -151,6 +172,19 @@ class MainViewModel : ViewModel() {
                 .onSuccess { route ->
                     _selectedRoute.value = route
 
+                    val userId = _currentUser.value?.id
+                    if (!userId.isNullOrBlank() && route.points.isNotEmpty()) {
+                        checkInRepository.getCheckInsByUserAndRoute(userId, route.id)
+                            .onSuccess { userRouteCheckIns ->
+                                _routeCompletionCount.value = userRouteCheckIns.size / route.points.size
+                            }
+                            .onFailure {
+                                _routeCompletionCount.value = 0
+                            }
+                    } else {
+                        _routeCompletionCount.value = 0
+                    }
+
                     if (route.creatorId.isNotBlank()) {
                         userRepository.getUserById(route.creatorId)
                             .onSuccess { creator -> _routeCreator.value = creator }
@@ -158,6 +192,7 @@ class MainViewModel : ViewModel() {
                 }
                 .onFailure {
                     _selectedRoute.value = null
+                    _routeCompletionCount.value = 0
                     _detailsError.value = it.message ?: "Erro ao carregar detalhes"
                 }
 
@@ -170,6 +205,71 @@ class MainViewModel : ViewModel() {
         _detailsError.value = null
         _exploreError.value = null
         _profileError.value = null
+        _createRouteError.value = null
+        _checkInError.value = null
+    }
+
+    fun createRoute(
+        title: String,
+        description: String,
+        category: RouteCategory,
+        onSuccess: () -> Unit = {}
+    ) {
+        if (_createRouteLoading.value) return
+
+        val creatorId = _currentUser.value?.id
+        if (creatorId.isNullOrBlank()) {
+            _createRouteError.value = "Usuario nao autenticado"
+            return
+        }
+
+        val sanitizedTitle = title.trim()
+        val sanitizedDescription = description.trim()
+        if (sanitizedTitle.isBlank() || sanitizedDescription.isBlank()) {
+            _createRouteError.value = "Preencha titulo e descricao"
+            return
+        }
+
+        viewModelScope.launch {
+            _createRouteLoading.value = true
+            _createRouteError.value = null
+
+            val newRoute = Route(
+                creatorId = creatorId,
+                title = sanitizedTitle,
+                description = sanitizedDescription,
+                category = category,
+                points = emptyList(),
+                estimatedDurationMinutes = 90,
+                rating = 0.0,
+                totalRatings = 0
+            )
+
+            routeRepository.createRoute(newRoute)
+                .onSuccess { routeId ->
+                    val createdRoute = newRoute.copy(id = routeId)
+
+                    _routes.value = listOf(createdRoute) + _routes.value
+
+                    val selectedCategory = _selectedExploreCategory.value
+                    if (selectedCategory == null || selectedCategory == category) {
+                        _exploreRoutes.value = listOf(createdRoute) + _exploreRoutes.value
+                    }
+
+                    _createdRoutes.value = listOf(createdRoute) + _createdRoutes.value
+
+                    _currentUser.value = _currentUser.value?.let { user ->
+                        if (user.createdRoutes.contains(routeId)) user else user.copy(createdRoutes = user.createdRoutes + routeId)
+                    }
+
+                    onSuccess()
+                }
+                .onFailure {
+                    _createRouteError.value = it.message ?: "Erro ao criar rota"
+                }
+
+            _createRouteLoading.value = false
+        }
     }
 
     fun loadExploreRoutes(category: RouteCategory? = _selectedExploreCategory.value) {
@@ -268,6 +368,91 @@ class MainViewModel : ViewModel() {
         _checkIns.value += checkIn
     }
 
+    fun startSelectedRouteProgress() {
+        _currentRoutePointIndex.value = 0
+        _checkInError.value = null
+    }
+
+    fun registerCheckInForCurrentPoint(onRouteCompleted: () -> Unit = {}) {
+        if (_checkInLoading.value) return
+
+        val userId = _currentUser.value?.id
+        if (userId.isNullOrBlank()) {
+            _checkInError.value = "Usuario nao autenticado"
+            return
+        }
+
+        val route = _selectedRoute.value
+        if (route == null || route.id.isBlank()) {
+            _checkInError.value = "Rota invalida para check-in"
+            return
+        }
+
+        if (route.points.isEmpty()) {
+            _checkInError.value = "Rota sem pontos para check-in"
+            return
+        }
+
+        val currentIndex = _currentRoutePointIndex.value
+        if (currentIndex >= route.points.size) {
+            _checkInError.value = "Rota ja concluida"
+            return
+        }
+
+        val currentPoint = route.points[currentIndex]
+
+        viewModelScope.launch {
+            _checkInLoading.value = true
+            _checkInError.value = null
+
+            val checkIn = CheckIn(
+                userId = userId,
+                routeId = route.id,
+                pointId = currentPoint.id
+            )
+
+            checkInRepository.createCheckIn(checkIn)
+                .onSuccess { createdCheckInId ->
+                    _checkIns.value += checkIn.copy(id = createdCheckInId)
+
+                    val nextIndex = currentIndex + 1
+                    _currentRoutePointIndex.value = nextIndex
+
+                    if (nextIndex >= route.points.size) {
+                        val earnedPoints = route.points.size * 10
+
+                        userRepository.addCompletedRoute(userId, route.id)
+                        userRepository.addPointsToUser(userId, earnedPoints)
+
+                        _currentUser.value = _currentUser.value?.let { user ->
+                            val updatedCompletedRoutes = if (user.completedRoutes.contains(route.id)) {
+                                user.completedRoutes
+                            } else {
+                                user.completedRoutes + route.id
+                            }
+                            user.copy(
+                                points = user.points + earnedPoints,
+                                completedRoutes = updatedCompletedRoutes
+                            )
+                        }
+
+                        if (_completedRoutes.value.none { it.id == route.id }) {
+                            _completedRoutes.value = listOf(route) + _completedRoutes.value
+                        }
+
+                        _routeCompletionCount.value = _routeCompletionCount.value + 1
+
+                        onRouteCompleted()
+                    }
+                }
+                .onFailure {
+                    _checkInError.value = it.message ?: "Erro ao registrar check-in"
+                }
+
+            _checkInLoading.value = false
+        }
+    }
+
     // =========================
     // BADGE ACTIONS
     // =========================
@@ -286,9 +471,15 @@ class MainViewModel : ViewModel() {
         _routesError.value = null
         _selectedRoute.value = null
         _routeCreator.value = null
+        _routeCompletionCount.value = 0
         _detailsError.value = null
         _detailsLoading.value = false
+        _currentRoutePointIndex.value = 0
+        _checkInLoading.value = false
+        _checkInError.value = null
         _routesLoading.value = false
+        _createRouteLoading.value = false
+        _createRouteError.value = null
         _exploreRoutes.value = emptyList()
         _exploreLoading.value = false
         _exploreError.value = null

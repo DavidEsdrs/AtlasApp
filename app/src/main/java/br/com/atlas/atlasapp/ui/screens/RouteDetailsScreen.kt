@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,6 +35,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import br.com.atlas.atlasapp.model.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,6 +50,7 @@ fun RouteDetailsScreen(
 ) {
     val route by viewModel.selectedRoute.collectAsState()
     val creator by viewModel.routeCreator.collectAsState()
+    val completionCount by viewModel.routeCompletionCount.collectAsState()
     val isLoading by viewModel.detailsLoading.collectAsState()
     val error by viewModel.detailsError.collectAsState()
 
@@ -95,34 +100,57 @@ fun RouteDetailsScreen(
                 return@Column
             }
 
-            Box(
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(160.dp)
-                    .background(Color(0xFFEFEFE8), RoundedCornerShape(10.dp)),
-                contentAlignment = Alignment.Center
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Icon(Icons.Default.Map, contentDescription = null, tint = Color.DarkGray)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(160.dp)
+                        .background(Color(0xFFEFEFE8), RoundedCornerShape(10.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Map, contentDescription = null, tint = Color.DarkGray)
+                }
+                Text(currentRoute.title, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+
+                if (completionCount > 0) {
+                    AssistChip(
+                        onClick = {},
+                        label = {
+                            Text(
+                                if (completionCount == 1) "Rota concluida 1 vez" else "Rota concluida $completionCount vezes"
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Default.CheckCircle, contentDescription = null)
+                        }
+                    )
+                }
+
+                Text(
+                    currentRoute.description,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    "Criado por ${creator?.name?.ifBlank { "Criador desconhecido" } ?: "Criador desconhecido"}",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 13.sp
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    StatCard("${currentRoute.points.size}", "Pontos de parada", Modifier.weight(1f))
+                    StatCard(formatDuration(currentRoute.estimatedDurationMinutes), "Duracao", Modifier.weight(1f))
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    StatCard(String.format("%.1f", currentRoute.rating), "Avaliacao", Modifier.weight(1f))
+                    StatCard("${currentRoute.totalRatings}", "Avaliacoes", Modifier.weight(1f))
+                }
+                Spacer(modifier = Modifier.height(8.dp))
             }
-            Text(currentRoute.title, fontWeight = FontWeight.Bold, fontSize = 22.sp)
-            Text(
-                currentRoute.description,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                "Criado por ${creator?.name?.ifBlank { "Criador desconhecido" } ?: "Criador desconhecido"}",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 13.sp
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatCard("${currentRoute.points.size}", "Pontos de parada", Modifier.weight(1f))
-                StatCard(formatDuration(currentRoute.estimatedDurationMinutes), "Duracao", Modifier.weight(1f))
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatCard(String.format("%.1f", currentRoute.rating), "Avaliacao", Modifier.weight(1f))
-                StatCard("${currentRoute.totalRatings}", "Avaliacoes", Modifier.weight(1f))
-            }
-            Spacer(modifier = Modifier.weight(1f))
+
             Button(onClick = onStartRoute, modifier = Modifier.fillMaxWidth()) {
                 Text("Iniciar rota")
             }

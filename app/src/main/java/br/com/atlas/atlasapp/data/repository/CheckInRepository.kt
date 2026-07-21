@@ -79,4 +79,20 @@ class CheckInRepository {
             Result.failure(e)
         }
     }
+
+    suspend fun getCheckInsByUserAndRoute(userId: String, routeId: String): Result<List<CheckIn>> {
+        return try {
+            val snapshot = checkInsCollection
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("routeId", routeId)
+                .get()
+                .await()
+            val checkIns = snapshot.documents.mapNotNull { doc ->
+                doc.toObject(CheckIn::class.java)?.copy(id = doc.id)
+            }
+            Result.success(checkIns)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

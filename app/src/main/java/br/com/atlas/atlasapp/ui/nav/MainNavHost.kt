@@ -45,7 +45,19 @@ fun MainNavHost(
                 modifier = modifier
             )
         }
-        composable(Routes.NEW_ROUTE) { NewRouteScreen(modifier = modifier) }
+        composable(Routes.NEW_ROUTE) {
+            NewRouteScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() },
+                onCreated = {
+                    navController.navigate(Routes.HOME) {
+                        launchSingleTop = true
+                        popUpTo(Routes.HOME)
+                    }
+                },
+                modifier = modifier
+            )
+        }
         composable(
             route = Routes.DETAILS_WITH_OPTIONAL_ID,
             arguments = listOf(
@@ -66,7 +78,14 @@ fun MainNavHost(
         }
         composable(Routes.IN_PROGRESS) {
             RouteProgressScreen(
+                viewModel = viewModel,
                 onBack = { navController.popBackStack() },
+                onRouteCompleted = {
+                    navController.navigate(Routes.HOME) {
+                        launchSingleTop = true
+                        popUpTo(Routes.HOME)
+                    }
+                },
                 modifier = modifier
             )
         }
