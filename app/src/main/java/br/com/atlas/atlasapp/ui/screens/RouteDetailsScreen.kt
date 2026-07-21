@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -23,20 +24,35 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import br.com.atlas.atlasapp.model.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RouteDetailsScreen(
+    viewModel: MainViewModel,
+    routeId: String?,
     onBack: () -> Unit,
     onStartRoute: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val route by viewModel.selectedRoute.collectAsState()
+    val creator by viewModel.routeCreator.collectAsState()
+    val isLoading by viewModel.detailsLoading.collectAsState()
+    val error by viewModel.detailsError.collectAsState()
+
+    LaunchedEffect(routeId) {
+        viewModel.loadRouteDetails(routeId)
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
@@ -53,6 +69,32 @@ fun RouteDetailsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+                return@Column
+            }
+
+            if (error != null) {
+                Text(error ?: "Erro ao carregar detalhes", color = MaterialTheme.colorScheme.error)
+                return@Column
+            }
+
+            val currentRoute = route
+            if (currentRoute == null) {
+                Text(
+                    "Rota nao encontrada",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                return@Column
+            }
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -62,23 +104,40 @@ fun RouteDetailsScreen(
             ) {
                 Icon(Icons.Default.Map, contentDescription = null, tint = Color.DarkGray)
             }
-            Text("Sabores escondidos do centro", fontWeight = FontWeight.Bold, fontSize = 22.sp)
+            Text(currentRoute.title, fontWeight = FontWeight.Bold, fontSize = 22.sp)
             Text(
-                "Uma jornada pelas padarias e lanchonetes que sobreviveram ao tempo.",
+                currentRoute.description,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            Text(
+                "Criado por ${creator?.name?.ifBlank { "Criador desconhecido" } ?: "Criador desconhecido"}",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 13.sp
+            )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatCard("5", "Pontos de parada", Modifier.weight(1f))
-                StatCard("2h30", "Duracao", Modifier.weight(1f))
+                StatCard("${currentRoute.points.size}", "Pontos de parada", Modifier.weight(1f))
+                StatCard(formatDuration(currentRoute.estimatedDurationMinutes), "Duracao", Modifier.weight(1f))
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatCard("4.8", "Avaliacao", Modifier.weight(1f))
-                StatCard("156", "Completadas", Modifier.weight(1f))
+                StatCard(String.format("%.1f", currentRoute.rating), "Avaliacao", Modifier.weight(1f))
+                StatCard("${currentRoute.totalRatings}", "Avaliacoes", Modifier.weight(1f))
             }
             Spacer(modifier = Modifier.weight(1f))
             Button(onClick = onStartRoute, modifier = Modifier.fillMaxWidth()) {
                 Text("Iniciar rota")
             }
         }
+    }
+}
+
+private fun formatDuration(totalMinutes: Int): String {
+    if (totalMinutes <= 0) return "-"
+
+    val hours = totalMinutes / 60
+    val minutes = totalMinutes % 60
+    return if (hours > 0) {
+        if (minutes > 0) "${hours}h${minutes}m" else "${hours}h"
+    } else {
+        "${minutes}m"
     }
 }

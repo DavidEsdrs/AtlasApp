@@ -13,3 +13,13 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Kotlin local cache
+.kotlin/
+
+# Firebase local config (keep template versioned)
+app/google-services.json
+
+# Signing keys
+*.jks
+*.keystore

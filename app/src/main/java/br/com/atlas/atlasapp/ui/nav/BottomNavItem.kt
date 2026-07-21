@@ -8,12 +8,20 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.graphics.vector.ImageVector
 
 object Routes {
+    const val LOGIN = "login"
+    const val REGISTER = "register"
     const val HOME = "home"
     const val EXPLORE = "explore"
     const val PROFILE = "profile"
     const val DETAILS = "details"
+    const val DETAILS_ID_ARG = "routeId"
+    const val DETAILS_WITH_OPTIONAL_ID = "$DETAILS?$DETAILS_ID_ARG={$DETAILS_ID_ARG}"
     const val IN_PROGRESS = "in_progress"
     const val NEW_ROUTE = "new_route"
+
+    fun detailsWithId(routeId: String): String {
+        return "$DETAILS?$DETAILS_ID_ARG=$routeId"
+    }
 }
 
 sealed class BottomNavItem(

@@ -1,0 +1,95 @@
+[
+  {
+    "creatorId": "REPLACE_WITH_VALID_USER_UID",
+    "title": "Sabores escondidos do centro",
+    "description": "Padarias e lanchonetes que resistem ao tempo.",
+    "category": "GASTRONOMIC",
+    "coverImageUrl": null,
+    "points": [
+      {
+        "id": "p1",
+        "title": "Padaria Central",
+        "description": "Parada para cafe e pao na chapa.",
+        "latitude": -23.55052,
+        "longitude": -46.63331,
+        "imageUrl": null,
+        "order": 1
+      },
+      {
+        "id": "p2",
+        "title": "Lanchonete da Esquina",
+        "description": "Salgados classicos do centro.",
+        "latitude": -23.5489,
+        "longitude": -46.6388,
+        "imageUrl": null,
+        "order": 2
+      }
+    ],
+    "estimatedDurationMinutes": 150,
+    "rating": 4.8,
+    "totalRatings": 156,
+    "createdAt": 1752998400000
+  },
+  {
+    "creatorId": "REPLACE_WITH_VALID_USER_UID",
+    "title": "Oasis urbanos secretos",
+    "description": "Pracas e jardins para respirar no meio da cidade.",
+    "category": "NATURE",
+    "coverImageUrl": null,
+    "points": [
+      {
+        "id": "p1",
+        "title": "Praca das Flores",
+        "description": "Area arborizada com bancos e sombra.",
+        "latitude": -23.5614,
+        "longitude": -46.6559,
+        "imageUrl": null,
+        "order": 1
+      },
+      {
+        "id": "p2",
+        "title": "Jardim da Colina",
+        "description": "Vista elevada para o bairro historico.",
+        "latitude": -23.5583,
+        "longitude": -46.6496,
+        "imageUrl": null,
+        "order": 2
+      }
+    ],
+    "estimatedDurationMinutes": 90,
+    "rating": 4.6,
+    "totalRatings": 89,
+    "createdAt": 1752998500000
+  },
+  {
+    "creatorId": "REPLACE_WITH_VALID_USER_UID",
+    "title": "Arte urbana em cada esquina",
+    "description": "Murais e grafites que contam historias locais.",
+    "category": "URBAN_ART",
+    "coverImageUrl": null,
+    "points": [
+      {
+        "id": "p1",
+        "title": "Mural do Viaduto",
+        "description": "Painel colorido com artistas da regiao.",
+        "latitude": -23.5536,
+        "longitude": -46.6411,
+        "imageUrl": null,
+        "order": 1
+      },
+      {
+        "id": "p2",
+        "title": "Beco Criativo",
+        "description": "Galeria a ceu aberto com rotacao de obras.",
+        "latitude": -23.5562,
+        "longitude": -46.6445,
+        "imageUrl": null,
+        "order": 2
+      }
+    ],
+    "estimatedDurationMinutes": 120,
+    "rating": 4.7,
+    "totalRatings": 102,
+    "createdAt": 1752998600000
+  }
+]
