@@ -137,14 +137,11 @@ class MainViewModel : ViewModel() {
 
             routeRepository.getAllRoutes()
                 .onSuccess { loadedRoutes ->
-                    if (loadedRoutes.isEmpty()) {
-                        seedInitialRoutesIfEmpty()
-                        routeRepository.getAllRoutes()
-                            .onSuccess { _routes.value = it }
-                            .onFailure { _routesError.value = it.message ?: "Erro ao carregar rotas" }
-                    } else {
-                        _routes.value = loadedRoutes
-                    }
+                    ensureDefaultRoutesExist(loadedRoutes)
+
+                    routeRepository.getAllRoutes()
+                        .onSuccess { _routes.value = it }
+                        .onFailure { _routesError.value = it.message ?: "Erro ao carregar rotas" }
                 }
                 .onFailure { _routesError.value = it.message ?: "Erro ao carregar rotas" }
 
@@ -494,12 +491,8 @@ class MainViewModel : ViewModel() {
         _badges.value = emptyList()
     }
 
-    private suspend fun seedInitialRoutesIfEmpty() {
-        if (hasAttemptedSeed) return
-        hasAttemptedSeed = true
-
-        val creatorId = _currentUser.value?.id ?: "seed-system"
-        val seedRoutes = listOf(
+    private fun buildSeedRoutes(creatorId: String): List<Route> {
+        return listOf(
             Route(
                 creatorId = creatorId,
                 title = "Sabores escondidos do centro",
@@ -580,9 +573,103 @@ class MainViewModel : ViewModel() {
                 estimatedDurationMinutes = 120,
                 rating = 4.7,
                 totalRatings = 102
+            ),
+            Route(
+                creatorId = creatorId,
+                title = "Recife historico a pe",
+                description = "Percurso curto para testar o mapa com pontos proximos e bem visiveis.",
+                category = RouteCategory.HISTORICAL,
+                points = listOf(
+                    RoutePoint(
+                        id = "p1",
+                        title = "Marco Zero",
+                        description = "Ponto de partida para o centro historico.",
+                        latitude = -8.0632,
+                        longitude = -34.8711,
+                        order = 1
+                    ),
+                    RoutePoint(
+                        id = "p2",
+                        title = "Rua do Bom Jesus",
+                        description = "Uma das ruas mais fotografadas do Recife Antigo.",
+                        latitude = -8.0616,
+                        longitude = -34.8700,
+                        order = 2
+                    ),
+                    RoutePoint(
+                        id = "p3",
+                        title = "Paço do Frevo",
+                        description = "Parada cultural para fechar o percurso.",
+                        latitude = -8.0610,
+                        longitude = -34.8708,
+                        order = 3
+                    )
+                ),
+                estimatedDurationMinutes = 45,
+                rating = 4.9,
+                totalRatings = 28
+            ),
+            Route(
+                creatorId = creatorId,
+                title = "Recife antigo completo",
+                description = "Roteiro mais longo com varios pontos para testar o mapa e a linha da rota.",
+                category = RouteCategory.HISTORICAL,
+                points = listOf(
+                    RoutePoint(
+                        id = "p1",
+                        title = "Marco Zero",
+                        description = "Comeco do passeio no Recife Antigo.",
+                        latitude = -8.0632,
+                        longitude = -34.8711,
+                        order = 1
+                    ),
+                    RoutePoint(
+                        id = "p2",
+                        title = "Cais do Sertao",
+                        description = "Polo cultural e turistico ao lado do porto.",
+                        latitude = -8.0638,
+                        longitude = -34.8702,
+                        order = 2
+                    ),
+                    RoutePoint(
+                        id = "p3",
+                        title = "Rua do Bom Jesus",
+                        description = "Rua historica com casario colorido.",
+                        latitude = -8.0616,
+                        longitude = -34.8700,
+                        order = 3
+                    ),
+                    RoutePoint(
+                        id = "p4",
+                        title = "Sinagoga Kahal Zur Israel",
+                        description = "Um dos pontos historicos mais conhecidos da cidade.",
+                        latitude = -8.0620,
+                        longitude = -34.8718,
+                        order = 4
+                    ),
+                    RoutePoint(
+                        id = "p5",
+                        title = "Paço do Frevo",
+                        description = "Fechamento cultural do percurso.",
+                        latitude = -8.0610,
+                        longitude = -34.8708,
+                        order = 5
+                    )
+                ),
+                estimatedDurationMinutes = 75,
+                rating = 4.8,
+                totalRatings = 41
             )
         )
+    }
 
-        seedRoutes.forEach { routeRepository.createRoute(it) }
+    private suspend fun ensureDefaultRoutesExist(existingRoutes: List<Route>) {
+        val existingTitles = existingRoutes.map { it.title }.toSet()
+        val seedRoutes = buildSeedRoutes(_currentUser.value?.id ?: "seed-system")
+
+        val missingSeedRoutes = seedRoutes.filterNot { it.title in existingTitles }
+        if (missingSeedRoutes.isEmpty()) return
+
+        missingSeedRoutes.forEach { routeRepository.createRoute(it) }
     }
 }

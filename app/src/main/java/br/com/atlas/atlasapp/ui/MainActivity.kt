@@ -1,6 +1,7 @@
 package br.com.atlas.atlasapp.ui
 
 import android.os.Bundle
+import android.Manifest
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -8,9 +9,14 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -31,6 +37,11 @@ class MainActivity : ComponentActivity() {
             val authViewModel: AuthViewModel by viewModels()
             val mainViewModel: MainViewModel by viewModels()
             val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
+            val locationPermissionLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.RequestPermission(),
+                onResult = {}
+            )
+            val locationPermissionRequested = remember { mutableStateOf(false) }
 
             LaunchedEffect(isLoggedIn) {
                 if (isLoggedIn) {
@@ -40,6 +51,13 @@ class MainActivity : ComponentActivity() {
 
             AtlasAppTheme() {
                 if (isLoggedIn) {
+                    LaunchedEffect(Unit) {
+                        if (!locationPermissionRequested.value) {
+                            locationPermissionRequested.value = true
+                            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                        }
+                    }
+
                     val navController = rememberNavController()
                     val backStackEntry = navController.currentBackStackEntryAsState().value
                     val showBottomBar = backStackEntry?.destination?.route?.let { route ->

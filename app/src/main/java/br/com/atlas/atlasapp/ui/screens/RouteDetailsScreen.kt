@@ -1,6 +1,5 @@
 package br.com.atlas.atlasapp.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,11 +9,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Map
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -35,9 +34,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import br.com.atlas.atlasapp.model.MainViewModel
+import br.com.atlas.atlasapp.ui.components.RouteMapView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,15 +104,13 @@ fun RouteDetailsScreen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Box(
+                RouteMapView(
+                    points = currentRoute.points,
+                    enableMyLocation = true,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(160.dp)
-                        .background(Color(0xFFEFEFE8), RoundedCornerShape(10.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.Map, contentDescription = null, tint = Color.DarkGray)
-                }
+                        .height(220.dp)
+                )
                 Text(currentRoute.title, fontWeight = FontWeight.Bold, fontSize = 22.sp)
 
                 if (completionCount > 0) {
