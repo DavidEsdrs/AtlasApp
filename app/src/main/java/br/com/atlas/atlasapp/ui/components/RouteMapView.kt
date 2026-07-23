@@ -43,6 +43,8 @@ fun RouteMapView(
     highlightedPointIndex: Int? = null,
     modifier: Modifier = Modifier,
     enableMyLocation: Boolean = false,
+    onMapClick: ((LatLng) -> Unit)? = null,
+    pendingPoint: LatLng? = null,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -91,12 +93,21 @@ fun RouteMapView(
         modifier = modifier,
         cameraPositionState = cameraPositionState,
         properties = MapProperties(isMyLocationEnabled = enableMyLocation && hasLocationPermission),
-        uiSettings = MapUiSettings(myLocationButtonEnabled = true)
+        uiSettings = MapUiSettings(myLocationButtonEnabled = true),
+        onMapClick = { latLng -> onMapClick?.invoke(latLng) }
     ) {
         val validPoints = points.filter { it.latitude != 0.0 || it.longitude != 0.0 }
 
         if (validPoints.size >= 2) {
             Polyline(points = validPoints.map { LatLng(it.latitude, it.longitude) })
+        }
+
+        pendingPoint?.let {
+            Marker(
+                state = MarkerState(position = it),
+                title = "Novo ponto",
+                icon = BitmapDescriptorFactory.fromBitmap(createCustomPin(AndroidColor.parseColor("#2D7FF9")))
+            )
         }
 
         validPoints.forEachIndexed { index, point ->

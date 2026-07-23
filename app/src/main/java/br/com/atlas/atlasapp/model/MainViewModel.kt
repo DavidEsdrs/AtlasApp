@@ -210,6 +210,7 @@ class MainViewModel : ViewModel() {
         title: String,
         description: String,
         category: RouteCategory,
+        points: List<RoutePoint>,
         onSuccess: () -> Unit = {}
     ) {
         if (_createRouteLoading.value) return
@@ -227,6 +228,37 @@ class MainViewModel : ViewModel() {
             return
         }
 
+        if (points.isEmpty()) {
+            _createRouteError.value = "Adicione pelo menos um ponto"
+            return
+        }
+
+        val sanitizedPoints = points.mapIndexed { index, point ->
+            RoutePoint(
+                id = point.id.ifBlank { "p${index + 1}" },
+                title = point.title.trim(),
+                description = point.description.trim(),
+                latitude = point.latitude,
+                longitude = point.longitude,
+                imageUrl = point.imageUrl,
+                order = index + 1
+            )
+        }
+
+        val hasBlankPointTitle = sanitizedPoints.any { it.title.isBlank() }
+        if (hasBlankPointTitle) {
+            _createRouteError.value = "Preencha o titulo de todos os pontos"
+            return
+        }
+
+        val hasInvalidCoordinates = sanitizedPoints.any {
+            it.latitude !in -90.0..90.0 || it.longitude !in -180.0..180.0
+        }
+        if (hasInvalidCoordinates) {
+            _createRouteError.value = "Coordenadas invalidas nos pontos"
+            return
+        }
+
         viewModelScope.launch {
             _createRouteLoading.value = true
             _createRouteError.value = null
@@ -236,7 +268,7 @@ class MainViewModel : ViewModel() {
                 title = sanitizedTitle,
                 description = sanitizedDescription,
                 category = category,
-                points = emptyList(),
+                points = sanitizedPoints,
                 estimatedDurationMinutes = 90,
                 rating = 0.0,
                 totalRatings = 0

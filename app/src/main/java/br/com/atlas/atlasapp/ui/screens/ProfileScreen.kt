@@ -172,7 +172,7 @@ fun ProfileScreen(
                 )
             }
         }
-        items(createdRoutes, key = { it.id }) { route ->
+        items(createdRoutes, key = { "created_${it.id}" }) { route ->
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(route.title, fontWeight = FontWeight.SemiBold)
@@ -200,7 +200,7 @@ fun ProfileScreen(
                 )
             }
         }
-        items(completedRoutes, key = { it.id }) { route ->
+        items(completedRoutes, key = { "completed_${it.id}" }) { route ->
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text(route.title, fontWeight = FontWeight.SemiBold)
