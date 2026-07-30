@@ -93,6 +93,7 @@ class RouteRepository {
 
         val parsedCategory = parseCategory(raw["category"] as? String)
         val parsedPoints = parsePoints(raw["points"])
+        val parsedImageUrl = parseRouteImageUrl(raw, parsedPoints)
 
         return Route(
             id = id,
@@ -100,7 +101,7 @@ class RouteRepository {
             title = raw["title"] as? String ?: "",
             description = raw["description"] as? String ?: "",
             category = parsedCategory,
-            coverImageUrl = raw["coverImageUrl"] as? String,
+            imageUrl = parsedImageUrl,
             points = parsedPoints,
             estimatedDurationMinutes = (raw["estimatedDurationMinutes"] as? Number)?.toInt() ?: 0,
             rating = (raw["rating"] as? Number)?.toDouble() ?: 0.0,
@@ -134,5 +135,19 @@ class RouteRepository {
                 order = (map["order"] as? Number)?.toInt() ?: 0
             )
         }
+    }
+
+    private fun parseRouteImageUrl(raw: Map<String, Any>, points: List<RoutePoint>): String? {
+        val routeLevelImage = (raw["imageUrl"] as? String)
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+
+        if (routeLevelImage != null) return routeLevelImage
+
+        return points
+            .sortedBy { it.order }
+            .firstNotNullOfOrNull { it.imageUrl }
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
     }
 }

@@ -40,6 +40,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -66,6 +68,7 @@ fun NewRouteScreen(
     var pendingLatLng by remember { mutableStateOf<LatLng?>(null) }
     var pointFormError by rememberSaveable { mutableStateOf<String?>(null) }
     var points by remember { mutableStateOf<List<RoutePoint>>(emptyList()) }
+    var isColumnScrollEnabled by remember { mutableStateOf(true) }
 
     val isLoading by viewModel.createRouteLoading.collectAsState()
     val error by viewModel.createRouteError.collectAsState()
@@ -112,7 +115,7 @@ fun NewRouteScreen(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState(), enabled = isColumnScrollEnabled)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -212,6 +215,15 @@ fun NewRouteScreen(
                     .fillMaxWidth()
                     .height(260.dp)
                     .background(Color(0xFFEFEFE8), RoundedCornerShape(8.dp))
+                    .pointerInput(Unit) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent(pass = PointerEventPass.Initial)
+                                // apenas observa — não consome o evento
+                                isColumnScrollEnabled = event.changes.none { it.pressed }
+                            }
+                        }
+                    }
             ) {
                 RouteMapView(
                     points = points,

@@ -9,9 +9,9 @@ data class Route(
 
     val category: RouteCategory = RouteCategory.HISTORICAL,
 
-    val coverImageUrl: String? = null,
-
     val points: List<RoutePoint> = emptyList(),
+
+    val imageUrl: String? = null,
 
     val estimatedDurationMinutes: Int = 0,
 

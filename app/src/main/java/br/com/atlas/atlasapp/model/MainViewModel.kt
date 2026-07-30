@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import br.com.atlas.atlasapp.data.repository.CheckInRepository
 import br.com.atlas.atlasapp.data.repository.RouteRepository
 import br.com.atlas.atlasapp.data.repository.UserRepository
+import br.com.atlas.atlasapp.services.WikiImageService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -263,12 +264,19 @@ class MainViewModel : ViewModel() {
             _createRouteLoading.value = true
             _createRouteError.value = null
 
+            val lastPoint = sanitizedPoints.last()
+            val coverImage = WikiImageService.fetchImageUrl(
+                latitude = lastPoint.latitude,
+                longitude = lastPoint.longitude
+            )
+
             val newRoute = Route(
                 creatorId = creatorId,
                 title = sanitizedTitle,
                 description = sanitizedDescription,
                 category = category,
                 points = sanitizedPoints,
+                imageUrl = coverImage,
                 estimatedDurationMinutes = 90,
                 rating = 0.0,
                 totalRatings = 0

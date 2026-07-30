@@ -4,7 +4,7 @@
     "title": "Sabores escondidos do centro",
     "description": "Padarias e lanchonetes que resistem ao tempo.",
     "category": "GASTRONOMIC",
-    "coverImageUrl": null,
+    "imageUrl": null,
     "points": [
       {
         "id": "p1",
@@ -35,7 +35,7 @@
     "title": "Oasis urbanos secretos",
     "description": "Pracas e jardins para respirar no meio da cidade.",
     "category": "NATURE",
-    "coverImageUrl": null,
+    "imageUrl": null,
     "points": [
       {
         "id": "p1",
@@ -66,7 +66,7 @@
     "title": "Arte urbana em cada esquina",
     "description": "Murais e grafites que contam historias locais.",
     "category": "URBAN_ART",
-    "coverImageUrl": null,
+    "imageUrl": null,
     "points": [
       {
         "id": "p1",
